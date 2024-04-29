@@ -623,6 +623,8 @@ struct _MetaWindowClass
   gboolean (*is_ssd) (MetaWindow *window);
   MtkRectangle (*get_frame_extents_for_gravity) (MetaWindow *window,
                                                  MetaGravity gravity);
+  gboolean (*get_titlebar_rect) (MetaWindow   *window,
+                                 MtkRectangle *rect);
 };
 
 /* These differ from window->has_foo_func in that they consider

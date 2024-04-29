@@ -4505,22 +4505,18 @@ void
 meta_window_get_titlebar_rect (MetaWindow   *window,
                                MtkRectangle *rect)
 {
+  MetaWindowClass *klass = META_WINDOW_GET_CLASS (window);
+
   meta_window_get_frame_rect (window, rect);
 
   /* The returned rectangle is relative to the frame rect. */
   rect->x = 0;
   rect->y = 0;
 
-  if (window->frame)
-    {
-      rect->height = window->frame->child_y;
-    }
-  else
-    {
-      /* Pick an arbitrary height for a titlebar. We might want to
-       * eventually have CSD windows expose their borders to us. */
-      rect->height = 50;
-    }
+  /* Pick an arbitrary height for a titlebar. We might want to
+   * eventually have CSD windows expose their borders to us. */
+  if (!klass->get_titlebar_rect || !klass->get_titlebar_rect (window, rect))
+    rect->height = 50;
 }
 
 /**

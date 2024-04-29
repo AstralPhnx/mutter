@@ -2069,6 +2069,19 @@ meta_window_x11_get_frame_extents_for_gravity (MetaWindow *window,
   return frame_extents;
 }
 
+static gboolean
+meta_window_x11_get_titlebar_rect (MetaWindow   *window,
+                                   MtkRectangle *rect)
+{
+  /* Will be updated in the next commits once frame field is moved to WindowX11 */
+
+  if (!window->frame)
+    return FALSE;
+
+  rect->height = window->frame->child_y;
+  return TRUE;
+}
+
 static void
 meta_window_x11_constructed (GObject *object)
 {
@@ -2222,6 +2235,7 @@ meta_window_x11_class_init (MetaWindowX11Class *klass)
   window_class->set_transient_for = meta_window_x11_set_transient_for;
   window_class->is_ssd = meta_window_x11_is_ssd;
   window_class->get_frame_extents_for_gravity = meta_window_x11_get_frame_extents_for_gravity;
+  window_class->get_titlebar_rect = meta_window_x11_get_titlebar_rect;
 
   klass->freeze_commits = meta_window_x11_impl_freeze_commits;
   klass->thaw_commits = meta_window_x11_impl_thaw_commits;

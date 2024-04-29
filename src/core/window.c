@@ -4266,29 +4266,14 @@ meta_window_get_gravity_position (MetaWindow  *window,
                                   int         *root_x,
                                   int         *root_y)
 {
-  MtkRectangle frame_extents;
+
+  MtkRectangle frame_extents =
+    META_WINDOW_GET_CLASS (window)->get_frame_extents_for_gravity (window, gravity);
   int w, h;
   int x, y;
 
   w = window->rect.width;
   h = window->rect.height;
-
-  if (gravity == META_GRAVITY_STATIC)
-    {
-      frame_extents = window->rect;
-      if (window->frame)
-        {
-          frame_extents.x = window->frame->rect.x + window->frame->child_x;
-          frame_extents.y = window->frame->rect.y + window->frame->child_y;
-        }
-    }
-  else
-    {
-      if (window->frame == NULL)
-        frame_extents = window->rect;
-      else
-        frame_extents = window->frame->rect;
-    }
 
   x = frame_extents.x;
   y = frame_extents.y;

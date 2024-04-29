@@ -2043,6 +2043,32 @@ meta_window_x11_is_ssd (MetaWindow *window)
   return window->frame != NULL;
 }
 
+static MtkRectangle
+meta_window_x11_get_frame_extents_for_gravity (MetaWindow *window,
+                                               MetaGravity gravity)
+{
+  /* Will be updated in the next commits once frame field is moved to WindowX11 */
+  MtkRectangle frame_extents;
+
+  if (gravity == META_GRAVITY_STATIC)
+    {
+      frame_extents = window->rect;
+      if (window->frame)
+        {
+          frame_extents.x = window->frame->rect.x + window->frame->child_x;
+          frame_extents.y = window->frame->rect.y + window->frame->child_y;
+        }
+    }
+  else
+    {
+      if (window->frame == NULL)
+        frame_extents = window->rect;
+      else
+        frame_extents = window->frame->rect;
+    }
+  return frame_extents;
+}
+
 static void
 meta_window_x11_constructed (GObject *object)
 {
@@ -2195,6 +2221,7 @@ meta_window_x11_class_init (MetaWindowX11Class *klass)
   window_class->is_focus_async = meta_window_x11_is_focus_async;
   window_class->set_transient_for = meta_window_x11_set_transient_for;
   window_class->is_ssd = meta_window_x11_is_ssd;
+  window_class->get_frame_extents_for_gravity = meta_window_x11_get_frame_extents_for_gravity;
 
   klass->freeze_commits = meta_window_x11_impl_freeze_commits;
   klass->thaw_commits = meta_window_x11_impl_thaw_commits;

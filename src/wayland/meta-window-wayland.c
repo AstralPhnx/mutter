@@ -818,6 +818,13 @@ meta_window_wayland_is_ssd (MetaWindow *window)
   return FALSE;
 }
 
+static MtkRectangle
+meta_window_wayland_get_frame_extents_for_gravity (MetaWindow *window,
+                                                   MetaGravity gravity)
+{
+  return window->rect;
+}
+
 static MetaStackLayer
 meta_window_wayland_calculate_layer (MetaWindow *window)
 {
@@ -949,6 +956,7 @@ meta_window_wayland_class_init (MetaWindowWaylandClass *klass)
   window_class->get_wayland_surface = meta_window_wayland_get_wayland_surface;
   window_class->set_transient_for = meta_window_wayland_set_transient_for;
   window_class->is_ssd = meta_window_wayland_is_ssd;
+  window_class->get_frame_extents_for_gravity = meta_window_wayland_get_frame_extents_for_gravity;
 
   obj_props[PROP_SURFACE] =
     g_param_spec_object ("surface", NULL, NULL,

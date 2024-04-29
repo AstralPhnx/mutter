@@ -619,6 +619,8 @@ struct _MetaWindowClass
 
   void (* map)   (MetaWindow *window);
   void (* unmap) (MetaWindow *window);
+
+  gboolean (*is_ssd) (MetaWindow *window);
 };
 
 /* These differ from window->has_foo_func in that they consider
@@ -886,3 +888,6 @@ int meta_get_window_suspend_timeout_s (void);
 
 gboolean
 meta_window_should_attach_to_parent (MetaWindow *window);
+
+gboolean
+meta_window_is_ssd (MetaWindow *window);

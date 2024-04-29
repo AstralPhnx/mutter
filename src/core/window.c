@@ -806,7 +806,7 @@ client_window_should_be_mapped (MetaWindow *window)
 #endif
 
   if (window->client_type == META_WINDOW_CLIENT_TYPE_X11 &&
-      window->decorated && !window->frame)
+      window->decorated && !meta_window_is_ssd (window))
     return FALSE;
 
   return TRUE;
@@ -1705,7 +1705,7 @@ meta_window_is_showable (MetaWindow *window)
 #endif
 
   if (window->client_type == META_WINDOW_CLIENT_TYPE_X11 &&
-      window->decorated && !window->frame)
+      window->decorated && !meta_window_is_ssd (window))
     return FALSE;
 
   return TRUE;
@@ -5788,7 +5788,7 @@ meta_window_shove_titlebar_onscreen (MetaWindow *window)
   g_return_if_fail (!window->override_redirect);
 
   /* If there's no titlebar, don't bother */
-  if (!window->frame)
+  if (!meta_window_is_ssd (window))
     return;
 
   /* Get the basic info we need */
@@ -5831,7 +5831,7 @@ meta_window_titlebar_is_onscreen (MetaWindow *window)
   const int min_width_absolute = 50;
 
   /* Titlebar can't be offscreen if there is no titlebar... */
-  if (!window->frame)
+  if (!meta_window_is_ssd (window))
     return TRUE;
 
   /* Get the rectangle corresponding to the titlebar */
@@ -6012,6 +6012,17 @@ meta_window_get_tile_area (MetaWindow   *window,
 
   if (tile_mode == META_TILE_RIGHT)
     tile_area->x += work_area.width - tile_area->width;
+}
+
+/**
+ * meta_window_is_ssd:
+ *
+ * Check if if the window has decorations drawn by Mutter.
+ */
+gboolean
+meta_window_is_ssd (MetaWindow *window)
+{
+  return META_WINDOW_GET_CLASS (window)->is_ssd (window);
 }
 
 /**

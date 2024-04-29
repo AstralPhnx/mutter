@@ -2036,6 +2036,13 @@ meta_window_x11_set_transient_for (MetaWindow *window,
   return TRUE;
 }
 
+static gboolean
+meta_window_x11_is_ssd (MetaWindow *window)
+{
+  /* Will be updated in the next commits once frame field is moved to WindowX11 */
+  return window->frame != NULL;
+}
+
 static void
 meta_window_x11_constructed (GObject *object)
 {
@@ -2187,6 +2194,7 @@ meta_window_x11_class_init (MetaWindowX11Class *klass)
   window_class->unmap = meta_window_x11_unmap;
   window_class->is_focus_async = meta_window_x11_is_focus_async;
   window_class->set_transient_for = meta_window_x11_set_transient_for;
+  window_class->is_ssd = meta_window_x11_is_ssd;
 
   klass->freeze_commits = meta_window_x11_impl_freeze_commits;
   klass->thaw_commits = meta_window_x11_impl_thaw_commits;
@@ -2404,7 +2412,7 @@ meta_window_x11_update_input_region (MetaWindow *window)
 
   if (window->decorated)
     {
-      if (!window->frame)
+      if (!meta_window_is_ssd (window))
         {
           if (priv->input_region)
             meta_window_set_input_region (window, NULL);
@@ -2692,7 +2700,7 @@ meta_window_move_resize_request (MetaWindow  *window,
 		  window->type);
     }
 
-  if (window->decorated && !window->frame)
+  if (window->decorated && !meta_window_is_ssd (window))
     {
       width = new_width;
       height = new_height;

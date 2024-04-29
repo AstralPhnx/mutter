@@ -1718,7 +1718,7 @@ constrain_to_single_monitor (MetaWindow         *window,
       window->type == META_WINDOW_DOCK ||
       meta_monitor_manager_get_num_logical_monitors (monitor_manager) == 1 ||
       !window->require_on_single_monitor ||
-      !window->frame ||
+      !meta_window_is_ssd (window) ||
       info->is_user_action ||
       meta_window_get_placement_rule (window))
     return TRUE;

@@ -424,6 +424,14 @@ has_shadow (MetaWindowActorX11 *actor_x11)
    */
   if (window->has_custom_frame_extents)
     return FALSE;
+ 
+  /*
+   * OpenJDK wrongly assumes that shaping a window implies no compositor
+   * shadows; make its compliance tests happy to give it what it wants ...
+   */
+  if (g_strcmp0 (window->res_name, "sun-awt-X11-XWindowPeer") == 0 &&
+      meta_window_x11_is_shaped (window))
+    return FALSE;
 
   /*
    * Generate shadows for all other windows.

@@ -2584,6 +2584,15 @@ meta_window_x11_update_shape_region (MetaWindow *window)
   meta_window_set_shape_region (window, region);
 }
 
+gboolean
+meta_window_x11_is_shaped (MetaWindow *window)
+{
+  MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
+  MetaWindowX11Private *priv = meta_window_x11_get_instance_private (window_x11);
+
+  return priv->shape_region != NULL;
+}
+
 /* Generally meta_window_x11_same_application() is a better idea
  * of "sameness", since it handles the case where multiple apps
  * want to look like the same app or the same app wants to look

@@ -381,6 +381,11 @@ window_place_centered (MetaWindow *window)
 
   type = window->type;
 
+  if (g_strcmp0 (meta_window_get_wm_class (window), "org.gnome.InitialSetup") == 0 ||
+      g_strcmp0 (meta_window_get_wm_class (window), "org.fedoraproject.welcome-screen") == 0 ||
+      g_strcmp0 (meta_window_get_wm_class (window), "fedora-welcome") == 0)
+    return TRUE;
+
   return (type == META_WINDOW_DIALOG ||
     type == META_WINDOW_MODAL_DIALOG ||
     type == META_WINDOW_SPLASHSCREEN ||

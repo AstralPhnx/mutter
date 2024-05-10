@@ -1387,6 +1387,7 @@ is_atomic_allowed (const char *driver_name)
 {
   const char *atomic_driver_deny_list[] = {
     "xlnx",
+    "tegra",
     NULL,
   };
 

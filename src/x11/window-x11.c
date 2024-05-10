@@ -2550,6 +2550,8 @@ meta_window_x11_update_input_region (MetaWindow *window)
   g_autoptr (MtkRegion) region = NULL;
   MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
   MetaWindowX11Private *priv = meta_window_x11_get_instance_private (window_x11);
+  MtkRectangle bounding_rect = { 0 };
+  Window xwindow;
 
   /* Decorated windows don't have an input region, because
      we don't shape the frame to match the client windows
@@ -2557,9 +2559,21 @@ meta_window_x11_update_input_region (MetaWindow *window)
   */
   if (window->decorated)
     {
-      if (priv->input_region)
-        meta_window_set_input_region (window, NULL);
-      return;
+      if (!window->frame)
+        {
+          if (priv->input_region)
+            meta_window_set_input_region (window, NULL);
+          return;
+        }
+      xwindow = window->frame->xwindow;
+      bounding_rect.width = window->buffer_rect.width;
+      bounding_rect.height = window->buffer_rect.height;
+    }
+  else
+    {
+      xwindow = priv->xwindow;
+      bounding_rect.width = priv->client_rect.width;
+      bounding_rect.height = priv->client_rect.height;
     }
 
   if (META_X11_DISPLAY_HAS_SHAPE (x11_display))
@@ -2603,8 +2617,8 @@ meta_window_x11_update_input_region (MetaWindow *window)
       else if (n_rects == 1 &&
                (rects[0].x == 0 &&
                 rects[0].y == 0 &&
-                rects[0].width == window->buffer_rect.width &&
-                rects[0].height == window->buffer_rect.height))
+                rects[0].width == bounding_rect.width &&
+                rects[0].height == bounding_rect.height))
         {
           /* This is the bounding region case. Keep the
            * region as NULL. */

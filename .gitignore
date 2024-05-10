@@ -9,3 +9,13 @@ runtime-dir
 build
 _build
 builddir
+.patches/0001-modified-3329.patch
+.patches/0001-place-Always-center-initial-setup-fedora-welcome.patch
+.patches/0001-Revert-x11-Use-input-region-from-frame-window-for-de.patch
+.patches/0001-window-actor-Special-case-shaped-Java-windows.patch
+.patches/1441.patch
+.patches/3567.patch
+.patches/3720.patch
+.patches/mutter-42.alpha-disable-tegra.patch
+.patches/mutter.spec
+.patches/xwayland-scaling.patch

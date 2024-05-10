@@ -45,6 +45,24 @@ struct _MetaWindowX11Class
   gboolean (*always_update_shape) (MetaWindow *window);
   void (*process_property_notify) (MetaWindow     *window,
                                    XPropertyEvent *event);
+  void (*stage_to_protocol) (MetaWindowX11 *window_x11,
+                             int            stage_x,
+                             int            stage_y,
+                             int            stage_width,
+                             int            stage_height,
+                             int           *protocol_x,
+                             int           *protocol_y,
+                             int           *protocol_width,
+                             int           *protocol_height);
+  void (*protocol_to_stage) (MetaWindowX11 *window_x11,
+                             int            protocol_x,
+                             int            protocol_y,
+                             int            protocol_width,
+                             int            protocol_height,
+                             int           *stage_x,
+                             int           *stage_y,
+                             int           *stage_width,
+                             int           *stage_height);
 };
 
 MetaWindow * meta_window_x11_new           (MetaDisplay        *display,
@@ -112,3 +130,23 @@ gboolean meta_window_x11_has_alpha_channel (MetaWindow *window);
 
 META_EXPORT
 Window meta_window_x11_get_xwindow (MetaWindow *window);
+
+void meta_window_x11_stage_to_protocol (MetaWindowX11 *window_x11,
+                                        int            stage_x,
+                                        int            stage_y,
+                                        int            stage_width,
+                                        int            stage_heigth,
+                                        int           *protocol_x,
+                                        int           *protocol_y,
+                                        int           *protocol_width,
+                                        int           *protocol_height);
+
+void meta_window_x11_protocol_to_stage (MetaWindowX11 *window_x11,
+                                        int            protocol_x,
+                                        int            protocol_y,
+                                        int            protocol_width,
+                                        int            protocol_height,
+                                        int           *stage_x,
+                                        int           *stage_y,
+                                        int           *stage_width,
+                                        int           *stage_heigth);

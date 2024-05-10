@@ -38,3 +38,7 @@ typedef struct _MetaSettings    MetaSettings;
 
 typedef struct _MetaWorkspaceManager MetaWorkspaceManager;
 typedef struct _MetaSelection   MetaSelection;
+
+#ifdef HAVE_WAYLAND
+typedef struct _MetaWaylandCompositor MetaWaylandCompositor;
+#endif

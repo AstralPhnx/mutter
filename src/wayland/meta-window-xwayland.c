@@ -27,8 +27,9 @@
 #include "x11/window-x11-private.h"
 #include "x11/xprops.h"
 #include "wayland/meta-window-xwayland.h"
-#include "wayland/meta-wayland.h"
+#include "wayland/meta-wayland-private.h"
 #include "wayland/meta-wayland-surface-private.h"
+#include "wayland/meta-xwayland.h"
 
 enum
 {
@@ -316,6 +317,72 @@ meta_window_xwayland_process_property_notify (MetaWindow     *window,
 }
 
 static void
+meta_window_xwayland_stage_to_protocol (MetaWindowX11 *window_x11,
+                                        int            stage_x,
+                                        int            stage_y,
+                                        int            stage_width,
+                                        int            stage_height,
+                                        int           *protocol_x,
+                                        int           *protocol_y,
+                                        int           *protocol_width,
+                                        int           *protocol_height)
+{
+  MetaDisplay *display = meta_window_get_display (META_WINDOW (window_x11));
+  MetaContext *context = meta_display_get_context (display);
+  MetaWaylandCompositor *wayland_compositor =
+    meta_context_get_wayland_compositor (context);
+  MetaXWaylandManager *xwayland_manager = &wayland_compositor->xwayland_manager;
+  int scale;
+
+  scale = meta_xwayland_get_effective_scale (xwayland_manager);
+  if (protocol_x)
+    *protocol_x = stage_x * scale;
+  if (protocol_y)
+    *protocol_y = stage_y * scale;
+  if (protocol_width)
+    *protocol_width = stage_width * scale;
+  if (protocol_height)
+    *protocol_height = stage_height * scale;
+}
+
+static void
+meta_window_xwayland_protocol_to_stage (MetaWindowX11 *window_x11,
+                                        int            protocol_x,
+                                        int            protocol_y,
+                                        int            protocol_width,
+                                        int            protocol_height,
+                                        int           *stage_x,
+                                        int           *stage_y,
+                                        int           *stage_width,
+                                        int           *stage_height)
+{
+  MetaDisplay *display = meta_window_get_display (META_WINDOW (window_x11));
+  MetaContext *context = meta_display_get_context (display);
+  MetaWaylandCompositor *wayland_compositor =
+    meta_context_get_wayland_compositor (context);
+  MetaXWaylandManager *xwayland_manager = &wayland_compositor->xwayland_manager;
+  MtkRectangle rect;
+  int scale;
+
+  rect.x = protocol_x;
+  rect.y = protocol_y;
+  rect.width = protocol_width;
+  rect.height = protocol_height;
+
+  scale = meta_xwayland_get_effective_scale (xwayland_manager);
+  mtk_rectangle_scale_double (&rect, 1.0 / scale, MTK_ROUNDING_STRATEGY_GROW, &rect);
+
+  if (stage_x)
+    *stage_x = rect.x;
+  if (stage_y)
+    *stage_y = rect.y;
+  if (stage_width)
+    *stage_width = rect.width;
+  if (stage_height)
+    *stage_height = rect.height;
+}
+
+static void
 meta_window_xwayland_class_init (MetaWindowXwaylandClass *klass)
 {
   MetaWindowClass *window_class = META_WINDOW_CLASS (klass);
@@ -331,6 +398,8 @@ meta_window_xwayland_class_init (MetaWindowXwaylandClass *klass)
   window_x11_class->thaw_commits = meta_window_xwayland_thaw_commits;
   window_x11_class->always_update_shape = meta_window_xwayland_always_update_shape;
   window_x11_class->process_property_notify = meta_window_xwayland_process_property_notify;
+  window_x11_class->stage_to_protocol = meta_window_xwayland_stage_to_protocol;
+  window_x11_class->protocol_to_stage = meta_window_xwayland_protocol_to_stage;
 
   gobject_class->get_property = meta_window_xwayland_get_property;
   gobject_class->set_property = meta_window_xwayland_set_property;

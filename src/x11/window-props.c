@@ -305,10 +305,15 @@ reload_icon_geometry (MetaWindow    *window,
         {
           MtkRectangle geometry;
 
-          geometry.x = (int)value->v.cardinal_list.cardinals[0];
-          geometry.y = (int)value->v.cardinal_list.cardinals[1];
-          geometry.width = (int)value->v.cardinal_list.cardinals[2];
-          geometry.height = (int)value->v.cardinal_list.cardinals[3];
+          meta_window_x11_protocol_to_stage (META_WINDOW_X11 (window),
+                                             value->v.cardinal_list.cardinals[0],
+                                             value->v.cardinal_list.cardinals[1],
+                                             value->v.cardinal_list.cardinals[2],
+                                             value->v.cardinal_list.cardinals[3],
+                                             &geometry.x,
+                                             &geometry.y,
+                                             &geometry.width,
+                                             &geometry.height);
 
           meta_window_set_icon_geometry (window, &geometry);
         }
@@ -370,11 +375,24 @@ reload_gtk_frame_extents (MetaWindow    *window,
         }
       else
         {
+          int left, right, top, bottom;
           MetaFrameBorder extents;
-          extents.left   = (int)value->v.cardinal_list.cardinals[0];
-          extents.right  = (int)value->v.cardinal_list.cardinals[1];
-          extents.top    = (int)value->v.cardinal_list.cardinals[2];
-          extents.bottom = (int)value->v.cardinal_list.cardinals[3];
+
+          meta_window_x11_protocol_to_stage (META_WINDOW_X11 (window),
+                                             value->v.cardinal_list.cardinals[0],
+                                             value->v.cardinal_list.cardinals[1],
+                                             value->v.cardinal_list.cardinals[2],
+                                             value->v.cardinal_list.cardinals[3],
+                                             &left,
+                                             &right,
+                                             &top,
+                                             &bottom);
+
+          extents.left = left;
+          extents.right = right;
+          extents.top = top;
+          extents.bottom = bottom;
+
           meta_window_set_custom_frame_extents (window, &extents, initial);
         }
     }
@@ -678,10 +696,16 @@ reload_opaque_region (MetaWindow    *window,
         {
           MtkRectangle *rect = &rects[rect_index];
 
-          rect->x = region[i++];
-          rect->y = region[i++];
-          rect->width = region[i++];
-          rect->height = region[i++];
+          meta_window_x11_protocol_to_stage (META_WINDOW_X11 (window),
+                                             region[i + 0],
+                                             region[i + 1],
+                                             region[i + 2],
+                                             region[i + 3],
+                                             &rect->x,
+                                             &rect->y,
+                                             &rect->width,
+                                             &rect->height);
+          i += 4;
 
           rect_index++;
         }
@@ -1245,7 +1269,61 @@ meta_set_normal_hints (MetaWindow *window,
    * as if flags were zero
    */
   if (hints)
-    window->size_hints = *(MetaSizeHints*)(hints);
+    {
+      MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
+
+      window->size_hints = *(MetaSizeHints*)(hints);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->x, hints->y,
+                                         hints->width, hints->height,
+                                         &window->size_hints.x,
+                                         &window->size_hints.y,
+                                         &window->size_hints.width,
+                                         &window->size_hints.height);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->min_width, hints->min_height,
+                                         0, 0,
+                                         &window->size_hints.min_width,
+                                         &window->size_hints.min_height,
+                                         NULL, NULL);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->max_width, hints->max_height,
+                                         0, 0,
+                                         &window->size_hints.max_width,
+                                         &window->size_hints.max_height,
+                                         NULL, NULL);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->width_inc, hints->height_inc,
+                                         0, 0,
+                                         &window->size_hints.width_inc,
+                                         &window->size_hints.height_inc,
+                                         NULL, NULL);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->min_aspect.x, hints->min_aspect.y,
+                                         0, 0,
+                                         &window->size_hints.min_aspect.x,
+                                         &window->size_hints.min_aspect.y,
+                                         NULL, NULL);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->max_aspect.x, hints->max_aspect.y,
+                                         0, 0,
+                                         &window->size_hints.max_aspect.x,
+                                         &window->size_hints.max_aspect.y,
+                                         NULL, NULL);
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         hints->base_width, hints->base_height,
+                                         0, 0,
+                                         &window->size_hints.base_width,
+                                         &window->size_hints.base_height,
+                                         NULL, NULL);
+    }
   else
     window->size_hints.flags = 0;
 

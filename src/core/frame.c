@@ -33,6 +33,7 @@
 #include "x11/meta-x11-display-private.h"
 #include "x11/window-x11-private.h"
 #include "x11/window-props.h"
+#include "x11/window-x11.h"
 
 #include <X11/Xatom.h>
 
@@ -65,6 +66,7 @@ meta_window_x11_set_frame_xwindow (MetaWindow *window,
   XSetWindowAttributes attrs;
   gulong create_serial = 0;
   MetaFrame *frame;
+  int child_x, child_y;
 
   if (window->frame)
     return;
@@ -123,11 +125,19 @@ meta_window_x11_set_frame_xwindow (MetaWindow *window,
   meta_stack_tracker_record_remove (window->display->stack_tracker,
                                     meta_window_x11_get_xwindow (window),
                                     XNextRequest (x11_display->xdisplay));
+  meta_window_x11_stage_to_protocol (META_WINDOW_X11 (window),
+                                     frame->child_x,
+                                     frame->child_y,
+                                     0, 0,
+                                     &child_x,
+                                     &child_y,
+                                     NULL, NULL);
+
   XReparentWindow (x11_display->xdisplay,
                    meta_window_x11_get_xwindow (window),
                    frame->xwindow,
-                   frame->child_x,
-                   frame->child_y);
+                   child_x,
+                   child_y);
   window->reparents_pending += 1;
   /* FIXME handle this error */
   mtk_x11_error_trap_pop (x11_display->xdisplay);
@@ -197,12 +207,22 @@ meta_window_destroy_frame (MetaWindow *window)
 
   if (!x11_display->closing)
     {
+      int child_x, child_y;
+
       if (!window->unmanaging)
         {
           meta_stack_tracker_record_add (window->display->stack_tracker,
                                          meta_window_x11_get_xwindow (window),
                                          XNextRequest (x11_display->xdisplay));
         }
+
+      meta_window_x11_stage_to_protocol (META_WINDOW_X11 (window),
+                                         window->frame->rect.x + borders.invisible.left,
+                                         window->frame->rect.y + borders.invisible.top,
+                                         0, 0,
+                                         &child_x,
+                                         &child_y,
+                                         NULL, NULL);
 
       XReparentWindow (x11_display->xdisplay,
                        meta_window_x11_get_xwindow (window),
@@ -211,8 +231,7 @@ meta_window_destroy_frame (MetaWindow *window)
                         * coordinates here means we'll need to ensure a configure
                         * notify event is sent; see bug 399552.
                         */
-                       window->frame->rect.x + borders.invisible.left,
-                       window->frame->rect.y + borders.invisible.top);
+                       child_x, child_y);
       window->reparents_pending += 1;
     }
 
@@ -263,6 +282,7 @@ meta_frame_query_borders (MetaFrame        *frame,
                           MetaFrameBorders *borders)
 {
   MetaWindow *window = frame->window;
+  MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
   MetaX11Display *x11_display = window->display->x11_display;
   int format, res;
   Atom type;
@@ -286,12 +306,22 @@ meta_frame_query_borders (MetaFrame        *frame,
   if (mtk_x11_error_trap_pop_with_return (x11_display->xdisplay) == Success &&
       res == Success && nitems == 4)
     {
-      borders->invisible = (MetaFrameBorder) {
-        ((long *) data)[0],
-        ((long *) data)[1],
-        ((long *) data)[2],
-        ((long *) data)[3],
-      };
+      int left, right, top, bottom;
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         ((long *) data)[0],
+                                         ((long *) data)[1],
+                                         ((long *) data)[2],
+                                         ((long *) data)[3],
+                                         &left,
+                                         &right,
+                                         &top,
+                                         &bottom);
+
+      borders->invisible.left = left;
+      borders->invisible.right = right;
+      borders->invisible.top = top;
+      borders->invisible.bottom = bottom;
     }
   else
     {
@@ -314,12 +344,21 @@ meta_frame_query_borders (MetaFrame        *frame,
   if (mtk_x11_error_trap_pop_with_return (x11_display->xdisplay) == Success &&
       res == Success && nitems == 4)
     {
-      borders->visible = (MetaFrameBorder) {
-        ((long *) data)[0],
-        ((long *) data)[1],
-        ((long *) data)[2],
-        ((long *) data)[3],
-      };
+      int left, right, top, bottom;
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         ((long *) data)[0],
+                                         ((long *) data)[1],
+                                         ((long *) data)[2],
+                                         ((long *) data)[3],
+                                         &left,
+                                         &right,
+                                         &top,
+                                         &bottom);
+      borders->visible.left = left;
+      borders->visible.right = right;
+      borders->visible.top = top;
+      borders->visible.bottom = bottom;
     }
   else
     {
@@ -367,7 +406,9 @@ meta_frame_sync_to_window (MetaFrame *frame,
                            gboolean   need_resize)
 {
   MetaWindow *window = frame->window;
+  MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
   MetaX11Display *x11_display = window->display->x11_display;
+  MtkRectangle rect;
 
   meta_topic (META_DEBUG_GEOMETRY,
               "Syncing frame geometry %d,%d %dx%d (SE: %d,%d)",
@@ -378,12 +419,22 @@ meta_frame_sync_to_window (MetaFrame *frame,
 
   mtk_x11_error_trap_push (x11_display->xdisplay);
 
+  meta_window_x11_stage_to_protocol (window_x11,
+                                     frame->rect.x,
+                                     frame->rect.y,
+                                     frame->rect.width,
+                                     frame->rect.height,
+                                     &rect.x,
+                                     &rect.y,
+                                     &rect.width,
+                                     &rect.height);
+
   XMoveResizeWindow (x11_display->xdisplay,
                      frame->xwindow,
-                     frame->rect.x,
-                     frame->rect.y,
-                     frame->rect.width,
-                     frame->rect.height);
+                     rect.x,
+                     rect.y,
+                     rect.width,
+                     rect.height);
 
   mtk_x11_error_trap_pop (x11_display->xdisplay);
 
@@ -420,6 +471,7 @@ static void
 send_configure_notify (MetaFrame *frame)
 {
   MetaX11Display *x11_display = frame->window->display->x11_display;
+  MetaWindowX11 *window_x11 = META_WINDOW_X11 (frame->window);
   XEvent event = { 0 };
 
   /* We never get told by the frames client, just reassert the
@@ -429,10 +481,16 @@ send_configure_notify (MetaFrame *frame)
   event.xconfigure.display = x11_display->xdisplay;
   event.xconfigure.event = frame->xwindow;
   event.xconfigure.window = frame->xwindow;
-  event.xconfigure.x = frame->rect.x;
-  event.xconfigure.y = frame->rect.y;
-  event.xconfigure.width = frame->rect.width;
-  event.xconfigure.height = frame->rect.height;
+
+  meta_window_x11_stage_to_protocol (window_x11,
+                                     frame->rect.x,
+                                     frame->rect.y,
+                                     frame->rect.width,
+                                     frame->rect.height,
+                                     &event.xconfigure.x,
+                                     &event.xconfigure.y,
+                                     &event.xconfigure.width,
+                                     &event.xconfigure.height);
   event.xconfigure.border_width = 0;
   event.xconfigure.above = None;
   event.xconfigure.override_redirect = False;

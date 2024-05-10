@@ -101,3 +101,8 @@ gboolean meta_context_raise_rlimit_nofile (MetaContext  *context,
 META_EXPORT
 gboolean meta_context_restore_rlimit_nofile (MetaContext  *context,
                                              GError      **error);
+
+#ifdef HAVE_WAYLAND
+META_EXPORT
+MetaWaylandCompositor * meta_context_get_wayland_compositor (MetaContext *context);
+#endif

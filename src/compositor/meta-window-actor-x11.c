@@ -696,11 +696,23 @@ meta_window_actor_x11_process_damage (MetaWindowActorX11 *actor_x11,
 
   surface = meta_window_actor_get_surface (META_WINDOW_ACTOR (actor_x11));
   if (surface)
-    meta_surface_actor_process_damage (surface,
-                                       event->area.x,
-                                       event->area.y,
-                                       event->area.width,
-                                       event->area.height);
+    {
+      MetaWindow *window =
+        meta_window_actor_get_meta_window (META_WINDOW_ACTOR (actor_x11));
+      MetaWindowX11 *window_x11 = META_WINDOW_X11 (window);
+      MtkRectangle damage;
+
+      meta_window_x11_protocol_to_stage (window_x11,
+                                         event->area.x, event->area.y,
+                                         event->area.width,  event->area.height,
+                                         &damage.x, &damage.y,
+                                         &damage.width, &damage.height);
+      meta_surface_actor_process_damage (surface,
+                                         damage.x,
+                                         damage.y,
+                                         damage.width,
+                                         damage.height);
+    }
 
   meta_window_actor_notify_damaged (META_WINDOW_ACTOR (actor_x11));
 }

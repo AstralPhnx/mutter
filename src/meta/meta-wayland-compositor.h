@@ -32,9 +32,6 @@ G_DECLARE_FINAL_TYPE (MetaWaylandCompositor,
                       GObject)
 
 META_EXPORT
-MetaWaylandCompositor *meta_context_get_wayland_compositor (MetaContext *context);
-
-META_EXPORT
 struct wl_display *meta_wayland_compositor_get_wayland_display (MetaWaylandCompositor *compositor);
 
 G_END_DECLS

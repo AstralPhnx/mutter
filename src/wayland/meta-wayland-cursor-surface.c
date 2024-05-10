@@ -92,37 +92,29 @@ cursor_sprite_prepare_at (MetaCursorSprite         *cursor_sprite,
 {
   MetaWaylandSurfaceRole *role = META_WAYLAND_SURFACE_ROLE (cursor_surface);
   MetaWaylandSurface *surface = meta_wayland_surface_role_get_surface (role);
+  MetaContext *context =
+    meta_wayland_compositor_get_context (surface->compositor);
+  MetaBackend *backend = meta_context_get_backend (context);
+  MetaMonitorManager *monitor_manager =
+    meta_backend_get_monitor_manager (backend);
+  MetaLogicalMonitor *logical_monitor;
 
-  if (!meta_wayland_surface_is_xwayland (surface))
+  logical_monitor =
+    meta_monitor_manager_get_logical_monitor_at (monitor_manager, x, y);
+  if (logical_monitor)
     {
-      MetaWaylandSurfaceRole *surface_role =
-        META_WAYLAND_SURFACE_ROLE (cursor_surface);
-      MetaWaylandSurface *surface =
-        meta_wayland_surface_role_get_surface (surface_role);
-      MetaContext *context =
-        meta_wayland_compositor_get_context (surface->compositor);
-      MetaBackend *backend = meta_context_get_backend (context);
-      MetaMonitorManager *monitor_manager =
-        meta_backend_get_monitor_manager (backend);
-      MetaLogicalMonitor *logical_monitor;
+      int surface_scale = surface->applied_state.scale;
+      float texture_scale;
 
-      logical_monitor =
-        meta_monitor_manager_get_logical_monitor_at (monitor_manager, x, y);
-      if (logical_monitor)
-        {
-          int surface_scale = surface->applied_state.scale;
-          float texture_scale;
+      if (meta_backend_is_stage_views_scaled (backend))
+        texture_scale = 1.0 / surface_scale;
+      else
+        texture_scale = (meta_logical_monitor_get_scale (logical_monitor) /
+                         surface_scale);
 
-          if (meta_backend_is_stage_views_scaled (backend))
-            texture_scale = 1.0 / surface_scale;
-          else
-            texture_scale = (meta_logical_monitor_get_scale (logical_monitor) /
-                             surface_scale);
-
-          meta_cursor_sprite_set_texture_scale (cursor_sprite, texture_scale);
-          meta_cursor_sprite_set_texture_transform (cursor_sprite,
-                                                    surface->buffer_transform);
-        }
+      meta_cursor_sprite_set_texture_scale (cursor_sprite, texture_scale);
+      meta_cursor_sprite_set_texture_transform (cursor_sprite,
+                                                surface->buffer_transform);
     }
 
   meta_wayland_surface_update_outputs (surface);
